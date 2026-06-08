@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated paper."
+title: "Phylogenetic coherence in microbiome composition across environmental gradients"
+authors:
+  - family-names: Chakraverti-Wuerthwein
+    given-names: "Milena S."
+    orcid: "https://orcid.org/0000-0002-4162-3437"
+  - family-names: Domenig
+    given-names: Alissa
+    orcid: "https://orcid.org/0009-0001-5226-1013"
+  - family-names: Kuehn
+    given-names: Seppe
+    orcid: "https://orcid.org/0000-0002-4130-6845"
+repository-code: "https://github.com/MilenaCW/microbiome-phylo-coherence"
+license: MIT
+preferred-citation:
+  type: article
+  title: "Phylogenetic coherence in microbiome composition across environmental gradients"
+  authors:
+    - family-names: Chakraverti-Wuerthwein
+      given-names: "Milena S."
+      orcid: "https://orcid.org/0000-0002-4162-3437"
+    - family-names: Domenig
+      given-names: Alissa
+      orcid: "https://orcid.org/0009-0001-5226-1013"
+    - family-names: Kuehn
+      given-names: Seppe
+      orcid: "https://orcid.org/0000-0002-4130-6845"
+  doi: "pending"
+  year: 2026
+  journal: "bioRxiv"
+  url: "https://doi.org/pending"

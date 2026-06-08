@@ -1,0 +1,212 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb, bm}
+\usepackage{geometry}
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage[sort&compress]{natbib}
+
+\geometry{margin=1in}
+
+\title{CCA Notes}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+Throughout, let $X \in \mathbb{R}^{p \times N}$ and $Y \in \mathbb{R}^{q \times N}$, where $p$ and $q$ are the number of features and $N$ is the number of samples. We assume the data are mean-zeroed/centered.
+
+% ---------------------------------------------------------------
+\section{Covariance and Cross-Covariance}
+
+The cross-covariance matrix is defined as
+\[
+    \Sigma_{xy} = \mathrm{Cov}(X, Y), \qquad
+    \left[\Sigma_{xy}\right]_{ij} = \mathrm{Cov}(X_i, Y_j),
+\]
+where in general
+\[
+    \mathrm{Cov}(X, Y) = \mathbb{E}\!\left[(X - \mathbb{E}[X])(Y - \mathbb{E}[Y])^T\right].
+\]
+
+\textit{Note:} This is structurally very similar to the variance; in fact $\left[\Sigma_{xx}\right]_{ii} = \mathrm{Cov}(X_i, X_i) = \sigma_i^2$.
+
+\textit{Note:} Graphically, the covariance is similar to a projection and is a measure of how much two vectors are aligned.
+
+For empirical data (as we have here), the sample estimator is
+\begin{equation}\label{eq:sample_cov}
+    \widehat{\mathrm{Cov}}(X, Y) = \frac{1}{N} X Y^T
+    \qquad \text{(often written } \widehat{\Sigma}_{xy}\text{)}.
+\end{equation}
+
+% ---------------------------------------------------------------
+\section{Correlation}
+
+The correlation between two random vectors $X$ and $Y$ is
+\[
+    \rho_{xy} = \mathrm{Corr}(X, Y) = \frac{\mathrm{Cov}(X,Y)}{\sigma_x \, \sigma_y}.
+\]
+
+\textit{Note:} Correlation is simply the covariance scaled by the variance of each random vector.
+
+\textit{Note:} If the projection (alignment) is high, the correlation will be high. Concretely, $\rho_{xy} = 0$ if orthogonal; $\rho_{xy} > 0$ if aligned; $\rho_{xy} < 0$ if anti-aligned.
+
+% ---------------------------------------------------------------
+\section{Singular Value Decomposition (SVD)}
+
+SVD is a generalization of eigendecomposition that is implementable on \emph{any} $m \times n$ matrix:
+\[
+    M_{[m \times n]} = U \Sigma V^*.
+\]
+$U$ and $V$ are unitary matrices, i.e.\ $U^{-1} = U^*$ and $V^{-1} = V^*$, where:
+\begin{itemize}
+    \item $U \; (m \times m)$: the left singular vectors form the columns and make up the basis of the column space of $M$.
+    \item $V \; (n \times n)$: the right singular vectors form the columns and make up the basis of the row space of $M$.
+    \item $\Sigma \; (m \times n)$: rectangular diagonal matrix with $\Sigma_{ii} = \sigma_i$ (singular values).
+\end{itemize}
+
+The key relationships are $M v_i = \sigma_i u_i$ and $M^* u_i = \sigma_i v_i$.
+
+\textit{Note:} SVD can be used to define a pseudoinverse: $M^+ = V \Sigma^+ U^*$.
+
+% ---------------------------------------------------------------
+\section{Principal Component Analysis (PCA)}
+
+The goal of PCA is to find a basis for the data that captures the greatest explained variance.
+
+\textbf{Approach 1: Eigendecomposition of the covariance matrix.}
+We want to maximize the projected variance:
+\[
+    \underset{\|\bm{w}\|=1}{\arg\max} \left\{ \sum_i (x_{(i)} \cdot \bm{w})^2 \right\}
+    = \underset{\|\bm{w}\|=1}{\arg\max} \left\{ \bm{w}^T X^T X \bm{w} \right\}
+    = \underset{\bm{w}}{\arg\max} \left\{ \frac{\bm{w}^T X^T X \bm{w}}{\bm{w}^T \bm{w}} \right\}.
+\]
+This is maximized by selecting the eigenvectors of $X^T X$, which have corresponding eigenvalues $\lambda_i = \sigma_{ii}^2$:
+\begin{equation}\label{eq:pca_eigen}
+    X^T X = W \Lambda W^T.
+\end{equation}
+
+\textbf{Approach 2: SVD.}
+$X$ can be decomposed via SVD as $X = U \Sigma W^T$, which gives
+\[
+    X^T X = W \hat{\Sigma}^2 W^T.
+\]
+This means the singular values of $X$, $\sigma_i$, are the explained variances of the PCs, and the right singular vectors (columns of $W$) are the PCs.
+
+% ---------------------------------------------------------------
+\section{Canonical Correlation Analysis (CCA)}
+
+The goal of CCA is to find a coupled basis between two datasets $(X, Y)$ such that the correlation of the projections in this new basis is maximized:
+\begin{equation}\label{eq:cca_obj}
+    (a_k, b_k) = \underset{a,b}{\arg\max} \left[ \mathrm{corr}(a^T X,\, b^T Y) \right],
+    \qquad a_k \in \mathbb{R}^p, \quad b_k \in \mathbb{R}^q,
+\end{equation}
+subject to the orthogonality constraints
+\[
+    \mathrm{Cov}(a_k^T X,\, a_d^T X) = \mathrm{Cov}(b_k^T Y,\, b_d^T Y) = 0 \quad \forall\, d < k,
+\]
+i.e.\ basis vectors are constrained to be orthogonal. The pairs $(a_k, b_k)$ are called \emph{canonical directions} or \emph{weights}.
+
+% ---------------------------------------------------------------
+\subsection{Maximization Problem (No Regularization)}
+
+Expanding the objective in \eqref{eq:cca_obj} and using $\mathrm{Cov}(a^T X, b^T Y) = a^T \mathrm{Cov}(X,Y)\, b$:
+\[
+    \underset{a,b}{\arg\max}\left[\mathrm{corr}(a^T X, b^T Y)\right]
+    = \underset{a,b}{\arg\max} \left[ \frac{\mathrm{Cov}(a^T X,\, b^T Y)}{\sigma_{a^T X}\,\sigma_{b^T Y}} \right]
+    = \underset{a,b}{\arg\max} \left[ \frac{a^T \mathrm{Cov}(X,Y)\, b}{\left(a^T \mathrm{Cov}(X,X)\, a\right)^{1/2} \left(b^T \mathrm{Cov}(Y,Y)\, b\right)^{1/2}} \right].
+\]
+Substituting the covariance matrices $\Sigma_{xy}$, $\Sigma_{xx}$, $\Sigma_{yy}$:
+\[
+    = \underset{a,b}{\arg\max} \left[ \frac{a^T \Sigma_{xy}\, b}{\left(a^T \Sigma_{xx}\, a\right)^{1/2} \left(b^T \Sigma_{yy}\, b\right)^{1/2}} \right].
+\]
+Now substitute $c = \Sigma_{xx}^{1/2} a$ and $d = \Sigma_{yy}^{1/2} b$, using $\Sigma_{xx}^{1/2} = V_x D_x^{1/2} V_x^T$:
+\begin{equation}\label{eq:cca_reduced}
+    = \underset{c,d}{\arg\max} \left[ \frac{c^T \Sigma_{xx}^{-1/2} \Sigma_{xy} \Sigma_{yy}^{-1/2}\, d}{\|c\|\,\|d\|} \right].
+\end{equation}
+
+\textit{Note:} To maximize \eqref{eq:cca_reduced} over $c$ and $d$, apply SVD to the matrix
+\begin{equation}\label{eq:Mcca}
+    M_{\mathrm{CCA}} = \Sigma_{xx}^{-1/2} \Sigma_{xy} \Sigma_{yy}^{-1/2}.
+\end{equation}
+In other words, the correlation is maximized when $c_k$ and $d_k$ are the $k$-th left and right singular vectors of $M_{\mathrm{CCA}}$, respectively, and the correlations are simply the singular values of $M_{\mathrm{CCA}}$.
+\begin{equation}\label{eq:rho_cca}
+    \rho_k = \sigma_k(M_{\mathrm{CCA}}),
+\end{equation}
+
+The canonical directions $a_k$ and $b_k$ are then recovered via
+\[
+    a_k = \Sigma_{xx}^{-1/2}\, c_k, \qquad b_k = \Sigma_{yy}^{-1/2}\, d_k.
+\]
+
+% ---------------------------------------------------------------
+\subsection{CCA with regularization}
+
+When working with actual data, we estimate the sample covariance matrices as
+\[
+    \widehat{\Sigma}_{xx} = \frac{1}{N} X X^T, \qquad
+    \widehat{\Sigma}_{yy} = \frac{1}{N} Y Y^T, \qquad
+    \widehat{\Sigma}_{xy} = \frac{1}{N} X Y^T.
+\]
+The $\widehat{\Sigma}_{xx}$ and $\widehat{\Sigma}_{yy}$ matrices will typically be singular when the number of features $(p, q)$ exceeds the number of samples $N$. Since computing the canonical directions requires inverting these matrices, we remedy this by adding a diagonal regularization term:
+\[
+    \widehat{\Sigma}_{xx}(\lambda_1) = \widehat{\Sigma}_{xx} + \lambda_1 I, \qquad
+    \widehat{\Sigma}_{yy}(\lambda_2) = \widehat{\Sigma}_{yy} + \lambda_2 I.
+\]
+This yields the Regularized CCA (RCCA) correlation coefficient \cite{tuzhilinaCanonicalCorrelationAnalysis2023}
+\[
+    \rho_{\mathrm{RCCA}}(a_k, b_k;\, \lambda_1, \lambda_2)
+    = \frac{a_k^T \widehat{\Sigma}_{xy}\, b_k}
+           {\sqrt{a_k^T(\widehat{\Sigma}_{xx} + \lambda_1 I)\,a_k}
+            \sqrt{b_k^T(\widehat{\Sigma}_{yy} + \lambda_2 I)\,b_k}},
+\]
+now $c_k$ and $d_k$ are the left and right singular vectors of
+\[
+    M_{\mathrm{RCCA}} = \left(\widehat{\Sigma}_{xx} + \lambda_1 I\right)^{-1/2}
+                         \widehat{\Sigma}_{xy}
+                         \left(\widehat{\Sigma}_{yy} + \lambda_2 I\right)^{-1/2},
+\]
+and $\rho_{\mathrm{RCCA}}(a_k, b_k;\, \lambda_1, \lambda_2)$ are the singular values of $M_{\mathrm{RCCA}}$.
+
+This can be seen as $\ell_2$ regularization by examining the resulting constrained optimization problem:
+\[
+    \underset{a,b}{\arg\max}\left[a^T \widehat{\Sigma}_{xy}\, b\right]
+    \quad \text{w.r.t. } a \in \mathbb{R}^p,\; b \in \mathbb{R}^q,
+\]
+subject to
+\[
+    a^T(\widehat{\Sigma}_{xx} + \lambda_1 I)\,a = 1, \qquad
+    b^T(\widehat{\Sigma}_{yy} + \lambda_2 I)\,b = 1.
+\]
+Rewriting the constraints as
+\[
+    a^T \widehat{\Sigma}_{xx}\, a + \lambda_1 \|a\|^2 = 1, \qquad
+    b^T \widehat{\Sigma}_{yy}\, b + \lambda_2 \|b\|^2 = 1,
+\]
+it becomes clear that $\lambda_1, \lambda_2$ are Lagrangian dual variables enforcing the constraints $\|a\|^2 \leq t_1$ and $\|b\|^2 \leq t_2$, where $t_1, t_2$ become smaller as $\lambda_1, \lambda_2$ grow.
+
+% ---------------------------------------------------------------
+\subsection{Hyperparameter Tuning}
+
+To tune $\lambda_1$ and $\lambda_2$, it is best to use hold-out sets. Split the data into
+\[
+    (X_{\mathrm{train}},\, Y_{\mathrm{train}}) \quad \text{and} \quad (X_{\mathrm{test}},\, Y_{\mathrm{test}}).
+\]
+Train the system to solve for $\{a_k, b_k\}$ on $(X_{\mathrm{train}}, Y_{\mathrm{train}})$ and evaluate the out-of-sample correlation
+\[
+    \rho_{\mathrm{oos}}(\{\lambda_1, \lambda_2\})
+    = \mathrm{corr}\!\left(a^T(\{\lambda_1, \lambda_2\})\,X_{\mathrm{test}},\;
+                           b^T(\{\lambda_1, \lambda_2\})\,Y_{\mathrm{test}}\right).
+\]
+Select the values $\{\lambda_1, \lambda_2\}$ that maximize $\rho_{\mathrm{val}}$:
+\begin{equation}
+    \{\lambda_1^*, \lambda_2^*\} = \underset{\lambda_1,\,\lambda_2}{\arg\max}
+    \left[\rho_{\mathrm{oos}}(\{\lambda_1, \lambda_2\})\right].
+\end{equation}
+
+% ---------------------------------------------------------------
+\bibliographystyle{plainnat}
+\bibliography{gsm}
+
+\end{document}

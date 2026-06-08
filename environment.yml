@@ -1,0 +1,31 @@
+name: microbiome-phylo-coherence
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  # R base
+  - r-base=4.4
+  # Bioconductor packages
+  - bioconductor-dada2
+  - bioconductor-phyloseq
+  - bioconductor-ggtree
+  # CRAN packages
+  - r-ape
+  - r-phangorn
+  - r-tidyverse
+  - r-ggplot2
+  - r-patchwork
+  - r-maps
+  - r-rcolorbrewer
+  - r-caret
+  - r-optparse
+  - r-ggally
+  - r-ggnewscale
+  - r-upsetr
+  - r-testthat
+  - r-devtools
+  - r-rcpp
+  - libtbb<2021   # pin: dada2/rcppparallel compiled against pre-2021 TBB ABI
+  # Command-line bioinformatics tool
+  - vsearch

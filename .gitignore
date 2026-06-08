@@ -1,0 +1,76 @@
+# GG2 backbone — copied locally but too large to commit (see README for download)
+greengenes/
+
+# Raw sequencing data (FASTQ files)
+soil/data/downloaded_data/
+ocean/data/downloaded_data/
+
+# Large intermediate processing outputs (DADA2, GG2 pipelines)
+# processed_data/environmental/ is intentionally NOT excluded (small CSVs)
+# Only GG2/0.90/final/{tree.nwk,taxonomy.csv} and GG2/summary_diagnostics/gg2_sweep_summary.tsv
+# are kept — needed by plot_abu_loadings.R and SI_GG2_performance.R (PERC=0.90 in run_all_plots.sh)
+soil/data/processed_data/16S/DADA/
+ocean/data/processed_data/16S/DADA/
+soil/data/processed_data/16S/GG2/input/
+ocean/data/processed_data/16S/GG2/input/
+soil/data/processed_data/16S/GG2/*/intermediate/
+ocean/data/processed_data/16S/GG2/*/intermediate/
+soil/data/processed_data/16S/GG2/*/diagnostics/
+ocean/data/processed_data/16S/GG2/*/diagnostics/
+soil/data/processed_data/16S/GG2/*/final/seqtab*
+ocean/data/processed_data/16S/GG2/*/final/seqtab*
+soil/data/processed_data/16S/GG2/*/final/dna-sequences.fasta
+ocean/data/processed_data/16S/GG2/*/final/dna-sequences.fasta
+soil/data/processed_data/16S/GG2/0.8[0-9]/final/
+ocean/data/processed_data/16S/GG2/0.8[0-9]/final/
+soil/data/processed_data/16S/GG2/0.9[1-9]/final/
+ocean/data/processed_data/16S/GG2/0.9[1-9]/final/
+soil/data/processed_data/16S/GG2/summary_diagnostics/*.jpg
+ocean/data/processed_data/16S/GG2/summary_diagnostics/*.jpg
+
+# CCA intermediate outputs not needed for figure reproduction
+**/null_abundance_loadings.csv
+**/abundance_loadings_untouched.csv
+**/env_loadings_untouched.csv
+**/step6_consentrait/cd*/
+
+# CCA step-level intermediate outputs (not needed for figure reproduction)
+**/step0_data/
+**/step4_plots/
+**/step1_hyperparam/cv_plot.jpg
+**/step1_hyperparam/*worker_BLAS*/
+**/step1_hyperparam/*workers_BLAS*/
+# cv_results.csv and best_hyperparam.csv — only soil/OTU needed (SI_example_hyperparameter_search.R)
+**/step1_hyperparam/cv_results.csv
+**/step1_hyperparam/best_hyperparam.csv
+!soil/results/CCA/0.90/OTU/step1_hyperparam/cv_results.csv
+!soil/results/CCA/0.90/OTU/step1_hyperparam/best_hyperparam.csv
+**/step2_loadings/alignment_combined.jpg
+**/step2_loadings/flips.csv
+**/step2_loadings/fold_indices.csv
+**/step2_loadings/projections.csv
+**/step6_consentrait/cluster_sizes.jpeg
+**/step6_consentrait/tauD.jpeg
+**/step6_consentrait/tree_filtered.nwk
+**/step7_pagelsLambda/pagel_lambda.jpeg
+**/step7_pagelsLambda/stats/null_lambda_cd*.csv
+**/crosstax_compare/
+
+# Reference distance matrices (large RDS files; regenerate with Step 5 before figures)
+soil/results/reference_distances/
+ocean/results/reference_distances/
+
+# Environmental diagnostic plots
+**/environmental/**/env_correlogram.*
+**/environmental/**/env_upset_missingness.*
+ocean/data/processed_data/environmental/partial-filtered/SI_ocean-full-correlogram.*
+
+# Cluster output logs
+**/output_files/
+*.out
+*.err
+
+# R session artifacts
+.Rhistory
+.RData
+.Rproj.user/
