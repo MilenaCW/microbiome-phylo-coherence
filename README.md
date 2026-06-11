@@ -2,7 +2,7 @@
 
 "Phylogenetic coherence in microbiome composition across environmental gradients"
 Milena S. Chakraverti-Wuerthwein, Alissa Domenig, Seppe Kuehn,
-bioRxiv [pending]; doi: [pending].
+bioRxiv 2026.06.07.730742; doi: https://doi.org/10.64898/2026.06.07.730742.
 
 This repository contains code and analyses for studying how microbial communities respond to environmental gradients across soil and marine biomes. Using canonical correlation analysis (CCA) on large-scale microbiome surveys, we show that species' responses along the dominant environmental gradient are phylogenetically conserved, closely related taxa behave similarly, while secondary environmental axes show little to no such structure. These findings support a two-scale model of microbial community assembly, where deeply conserved evolutionary traits drive major compositional shifts, and more evolutionarily labile traits govern finer-scale variation.
 
