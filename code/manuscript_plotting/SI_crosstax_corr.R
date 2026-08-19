@@ -35,6 +35,10 @@ TAX_PALETTE <- c(
 # Label used for the empty icon-placeholder facet
 ICON_LABEL <- " "
 
+# Taxonomy-shuffle null colour (distinguishable from the sample-shuffle null's plain grey,
+# both in colour and in greyscale print). Kept in sync with SI_crosstax_stability.R.
+TAXSHUFFLE_NULL_COLOR <- "#5b6b73"
+
 # ---------------------------------------------------------------------------
 get_repo_root <- function() {
   args     <- commandArgs(trailingOnly = FALSE)
@@ -114,7 +118,7 @@ load_dataset <- function(root, ds, perc) {
   # Collect null expectations (CD=1 per tax_level) if available
   null_list <- list()
   for (tax_level in tax_dirs) {
-    null_file <- file.path(compare_base, tax_level, "step3_null", "null_correlations_per_fold.csv")
+    null_file <- file.path(compare_base, tax_level, "step3a_null_sample_shuffle", "null_correlations_per_fold.csv")
     if (!file.exists(null_file)) next
     null_raw  <- read_csv(null_file, show_col_types = FALSE)
     null_cd1  <- null_raw %>%
@@ -127,11 +131,28 @@ load_dataset <- function(root, ds, perc) {
   }
   null_data <- if (length(null_list) > 0) bind_rows(null_list) else NULL
 
+  # Taxonomy-shuffle null expectations (CD=1 per tax_level), if available.
+  taxnull_list <- list()
+  for (tax_level in tax_dirs) {
+    taxnull_file <- file.path(compare_base, tax_level, "step3b_null_tax_shuffle", "taxshuffle_correlations_per_fold.csv")
+    if (!file.exists(taxnull_file)) next
+    taxnull_raw <- read_csv(taxnull_file, show_col_types = FALSE)
+    taxnull_cd1 <- taxnull_raw %>%
+      filter(canonical_direction == 1, !is.na(test)) %>%
+      group_by(seed) %>%
+      summarise(mean_test = mean(test, na.rm = TRUE), .groups = "drop") %>%
+      summarise(mean = mean(mean_test), sd = sd(mean_test), n = dplyr::n(), .groups = "drop") %>%
+      mutate(tax_level = tax_level)
+    taxnull_list[[tax_level]] <- taxnull_cd1
+  }
+  taxnull_data <- if (length(taxnull_list) > 0) bind_rows(taxnull_list) else NULL
+
   n_cd <- max(corr_data$canonical_direction, na.rm = TRUE)
 
   list(
     corr_data      = corr_data,
     null_data      = null_data,
+    taxnull_data   = taxnull_data,
     n_cd           = n_cd,
     plot_tax_levels = plot_tax_levels
   )
@@ -191,7 +212,7 @@ fix_icon_panel <- function(g) {
 }
 
 # ---------------------------------------------------------------------------
-make_plot <- function(corr_data, null_data, n_cd, plot_tax_levels, title) {
+make_plot <- function(corr_data, null_data, taxnull_data, n_cd, plot_tax_levels, title) {
   # Factor levels: icon placeholder first, then tax levels in canonical order
   fac_levels <- c(ICON_LABEL, plot_tax_levels)
 
@@ -248,6 +269,28 @@ make_plot <- function(corr_data, null_data, n_cd, plot_tax_levels, title) {
       )
   }
 
+  # Taxonomy-shuffle null distribution band + line (CD1 only; independent of sample-shuffle null)
+  if (!is.null(taxnull_data) && nrow(taxnull_data) > 0) {
+    taxnull_plot <- taxnull_data %>%
+      mutate(tax_level = factor(tax_level, levels = fac_levels))
+    p <- p +
+      geom_rect(
+        data        = taxnull_plot,
+        aes(xmin = 0.5, xmax = n_cd + 0.5,
+            ymin = mean - sd / sqrt(n), ymax = mean + sd / sqrt(n)),
+        fill        = TAXSHUFFLE_NULL_COLOR,
+        alpha       = 0.15,
+        inherit.aes = FALSE
+      ) +
+      geom_hline(
+        data      = taxnull_plot,
+        aes(yintercept = mean),
+        linetype  = "dashed",
+        color     = TAXSHUFFLE_NULL_COLOR,
+        linewidth = 0.7
+      )
+  }
+
   p <- p +
     geom_point(size = 2) +
     geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd), width = 0, linewidth = 0.8)
@@ -270,8 +313,8 @@ main <- function() {
   soil  <- load_dataset(root, "soil",  perc)
   ocean <- load_dataset(root, "ocean", perc)
 
-  p_soil  <- make_plot(soil$corr_data,  soil$null_data,  soil$n_cd,  soil$plot_tax_levels,  "Soil")
-  p_ocean <- make_plot(ocean$corr_data, ocean$null_data, ocean$n_cd, ocean$plot_tax_levels, "Ocean")
+  p_soil  <- make_plot(soil$corr_data,  soil$null_data,  soil$taxnull_data,  soil$n_cd,  soil$plot_tax_levels,  "Soil")
+  p_ocean <- make_plot(ocean$corr_data, ocean$null_data, ocean$taxnull_data, ocean$n_cd, ocean$plot_tax_levels, "Ocean")
 
   combined <- p_soil / p_ocean
 

@@ -117,6 +117,86 @@ test_that("normalize_and_align_loadings applies y-derived flip to x loadings", {
   expect_true(all(x_fold2 < 0))
 })
 
+# ---- coarsen_composition ----
+
+test_that("coarsen_composition sums relative abundance within each tax group and sample", {
+  composition_df <- data.frame(
+    sample_id = c("s1", "s2"),
+    otu1 = c(0.1, 0.2),
+    otu2 = c(0.3, 0.1),
+    otu3 = c(0.6, 0.7)
+  )
+  taxonomy <- data.frame(
+    Feature_ID = c("otu1", "otu2", "otu3"),
+    Genus = c("A", "A", "B")
+  )
+  result <- coarsen_composition(composition_df, taxonomy, "Genus")
+  result <- result[order(result$sample_id), ]
+  expect_equal(sort(setdiff(names(result), "sample_id")), c("A", "B"))
+  expect_equal(result$A[result$sample_id == "s1"], 0.4)
+  expect_equal(result$B[result$sample_id == "s1"], 0.6)
+  expect_equal(result$A[result$sample_id == "s2"], 0.3)
+  expect_equal(result$B[result$sample_id == "s2"], 0.7)
+})
+
+test_that("coarsen_composition fills absent group/sample combinations with 0", {
+  composition_df <- data.frame(
+    sample_id = c("s1", "s2"),
+    otu1 = c(1, 0),
+    otu2 = c(0, 1)
+  )
+  taxonomy <- data.frame(
+    Feature_ID = c("otu1", "otu2"),
+    Genus = c("A", "B")
+  )
+  result <- coarsen_composition(composition_df, taxonomy, "Genus")
+  result <- result[order(result$sample_id), ]
+  expect_equal(result$A, c(1, 0))
+  expect_equal(result$B, c(0, 1))
+})
+
+test_that("coarsen_composition errors when a feature is missing from taxonomy", {
+  composition_df <- data.frame(sample_id = "s1", otu1 = 1, otu_unknown = 0)
+  taxonomy <- data.frame(Feature_ID = "otu1", Genus = "A")
+  expect_error(coarsen_composition(composition_df, taxonomy, "Genus"))
+})
+
+# ---- shuffle_taxonomy_labels ----
+
+test_that("shuffle_taxonomy_labels preserves group sizes at every taxonomic level", {
+  taxonomy <- data.frame(
+    Feature_ID = paste0("otu", 1:6),
+    Genus = c("A", "A", "A", "B", "B", "C"),
+    Family = c("X", "X", "X", "X", "X", "Y"),
+    stringsAsFactors = FALSE
+  )
+  shuffled <- shuffle_taxonomy_labels(taxonomy, seed = 1)
+  expect_equal(sort(table(shuffled$Genus)), sort(table(taxonomy$Genus)))
+  expect_equal(sort(table(shuffled$Family)), sort(table(taxonomy$Family)))
+  expect_equal(sort(shuffled$Feature_ID), sort(taxonomy$Feature_ID))
+})
+
+test_that("shuffle_taxonomy_labels actually permutes the assignment", {
+  taxonomy <- data.frame(
+    Feature_ID = paste0("otu", 1:20),
+    Genus = rep(c("A", "B"), 10),
+    stringsAsFactors = FALSE
+  )
+  shuffled <- shuffle_taxonomy_labels(taxonomy, seed = 1)
+  expect_false(identical(shuffled$Feature_ID, taxonomy$Feature_ID))
+})
+
+test_that("shuffle_taxonomy_labels is reproducible given a seed", {
+  taxonomy <- data.frame(
+    Feature_ID = paste0("otu", 1:10),
+    Genus = rep(c("A", "B"), 5),
+    stringsAsFactors = FALSE
+  )
+  s1 <- shuffle_taxonomy_labels(taxonomy, seed = 42)
+  s2 <- shuffle_taxonomy_labels(taxonomy, seed = 42)
+  expect_equal(s1$Feature_ID, s2$Feature_ID)
+})
+
 test_that("align_loading_vectors flips canonical directions independently", {
   df <- data.frame(
     canonical_direction = c(rep(1L, 6), rep(2L, 6)),

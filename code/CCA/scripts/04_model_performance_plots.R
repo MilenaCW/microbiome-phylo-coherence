@@ -43,7 +43,7 @@ if (!grepl("^/", data_path)) data_path <- file.path(root, data_path)
 results_path <- cfg$results_path
 if (!grepl("^/", results_path)) results_path <- file.path(root, results_path)
 step2_dir <- file.path(results_path, opt$perc_identity, opt$tax_level, "step2_loadings")
-step3_dir <- file.path(results_path, opt$perc_identity, opt$tax_level, "step3_null")
+step3a_dir <- file.path(results_path, opt$perc_identity, opt$tax_level, "step3a_null_sample_shuffle")
 step4_dir <- file.path(results_path, opt$perc_identity, opt$tax_level, "step4_plots")
 dir.create(step4_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -52,7 +52,7 @@ corr_per_fold <- read.csv(file.path(step2_dir, "correlations_per_fold.csv"))
 true_stats <- corr_per_fold %>%
   group_by(canonical_direction) %>%
   summarise(mean = mean(test, na.rm = TRUE), sd = sd(test, na.rm = TRUE), .groups = "drop")
-null_corr <- read.csv(file.path(step3_dir, "null_correlations_per_fold.csv"))
+null_corr <- read.csv(file.path(step3a_dir, "null_correlations_per_fold.csv"))
 null_cd1 <- null_corr %>% filter(canonical_direction == 1)
 null_per_seed <- null_cd1 %>% group_by(seed) %>% summarise(mean_test = mean(test, na.rm = TRUE), .groups = "drop")
 null_mean <- mean(null_per_seed$mean_test)

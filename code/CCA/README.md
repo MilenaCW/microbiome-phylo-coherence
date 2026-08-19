@@ -8,12 +8,13 @@ This folder contains a regularized CCA (RCCA) pipeline for linking compositional
 1. **Read data** (`00_read_data.R`) -- load and scale X (composition) and Y (environment)
 2. **Hyperparameter search** (`01_hyperparam_search.R`) -- k-fold CV over lambda grid
 3. **Loadings** (`02_loadings.R`) -- extract, normalize, and align across folds
-4. **Null distribution** (`03_null_distribution.R`) -- shuffle-based null for CD1
-5. **Model performance plots** (`04_model_performance_plots.R`) -- true vs null, env + tree loadings
-6. **Cross-taxonomic compare** (`05_crosstaxonomic_compare.R`) -- compare results across tax levels (optional)
-7. **consenTRAIT** (`06_consenTRAIT.R`) -- phylogenetic trait conservation (OTU only)
-8. **Pagel's lambda** (`07_pagelsLambda.R`) -- phylogenetic signal in loadings (OTU only)
-9. **PCA comparison** (`08_PCA_compare.R`) -- angle and EVR vs PCA (optional)
+4. **Sample-shuffle null** (`03a_null_sample_shuffle.R`) -- shuffle sample rows of X, breaking the true composition-environment link entirely; shuffle-based null for CD1
+5. **Taxonomy-shuffle null** (`03b_null_tax_shuffle.R`) -- shuffle OTU -> taxonomic lineage assignment (preserving group sizes), keeping the true sample-environment link intact; tests whether cross-level stability reflects phylogenetically coherent grouping rather than any equal-sized grouping (non-OTU tax levels only)
+6. **Model performance plots** (`04_model_performance_plots.R`) -- true vs sample-shuffle null, env + tree loadings
+7. **Cross-taxonomic compare** (`05_crosstaxonomic_compare.R`) -- compare results across tax levels, including both nulls (optional)
+8. **consenTRAIT** (`06_consenTRAIT.R`) -- phylogenetic trait conservation (OTU only)
+9. **Pagel's lambda** (`07_pagelsLambda.R`) -- phylogenetic signal in loadings (OTU only)
+10. **PCA comparison** (`08_PCA_compare.R`) -- angle and EVR vs PCA (optional)
 
 See `CCA_Notes.tex` for methodological background on RCCA and the cross-validation procedure.
 
@@ -100,14 +101,17 @@ All scripts live under `scripts/` and are numbered in order. All take `--config`
 - `02_loadings.R` (R)
   - Extracts loadings at best hyperparameters, normalizes to unit Euclidean norm, and aligns across folds to resolve sign ambiguity; saves loadings CSVs and alignment assessment plot to `step2_loadings/`. Accepts `--debug` to save intermediate fold-level files.
 
-- `03_null_distribution.R` (R)
-  - Per-seed row shuffle of X, followed by a full hyperparameter search and loadings extraction; saves null correlations and null loadings to `step3_null/`. Accepts `--n_cores` to parallelize.
+- `03a_null_sample_shuffle.R` (R)
+  - Per-seed row shuffle of X (breaks the true composition-environment correspondence), followed by a full hyperparameter search and loadings extraction; saves null correlations and null loadings to `step3a_null_sample_shuffle/`. Accepts `--n_cores` to parallelize.
+
+- `03b_null_tax_shuffle.R` (R, non-OTU only)
+  - Per-seed shuffle of OTU -> taxonomic lineage assignment (preserving group sizes at every rank; the true sample-environment correspondence is kept intact), re-coarsened to `--tax_level`, followed by a full hyperparameter search and loadings extraction; saves null correlations and null loadings to `step3b_null_tax_shuffle/`. Errors if `--tax_level OTU` (every OTU is already its own group, so shuffling is a no-op). Accepts `--n_cores` to parallelize.
 
 - `04_model_performance_plots.R` (R)
-  - Plots true vs null test correlation, env loadings scatter, and tree loadings (one file per canonical direction); writes to `step4_plots/`. Also accepts `--loadings_style continuous|binary`.
+  - Plots true vs sample-shuffle-null test correlation, env loadings scatter, and tree loadings (one file per canonical direction); writes to `step4_plots/`. Also accepts `--loadings_style continuous|binary`.
 
 - `05_crosstaxonomic_compare.R` (R)
-  - Discovers all tax levels run under a given `perc_identity` and compares canonical correlations and env loadings across levels; writes to `crosstax_compare/`. Takes `--config`, `--perc_identity`, `--verbose` (no `--tax_level`).
+  - Discovers all tax levels run under a given `perc_identity` and compares canonical correlations and env loadings across levels, overlaying both the sample-shuffle and taxonomy-shuffle null (where available); writes to `crosstax_compare/`. Takes `--config`, `--perc_identity`, `--verbose` (no `--tax_level`).
 
 - `06_consenTRAIT.R` (R, OTU only)
   - Runs `consentrait_signed()` for each (canonical direction x fold) combination; saves aggregated tauD CSVs and diagnostic plots to `step6_consentrait/`. Takes `--config`, `--perc_identity`, `--verbose` (no `--tax_level`; always operates on OTU).
@@ -119,7 +123,7 @@ All scripts live under `scripts/` and are numbered in order. All take `--config`
   - For each available tax level, compares CCA canonical directions to PCA: computes the angle between each CCA canonical direction and PCA PC1 (with a shuffle null distribution), and cumulative explained variance ratios (EVR) for the CCA vs PCA subspaces on train and test splits. Processes all available tax levels in a single run. Takes `--dataset` (required; e.g. `soil`), `--perc_identity`, `--n_cds` (number of significant CDs; default 4), `--n_shuffles` (default 100), `--n_cores`, `--blas_threads`. Does **not** take `--config` or `--tax_level`.
 
 Shared helpers:
-- `functions/CCA_functions.R` -- alignment, CV, loadings extraction, `shuffle_sample`, CV plot helper, alignment assessment plot
+- `functions/CCA_functions.R` -- alignment, CV, loadings extraction, `shuffle_sample`, `shuffle_taxonomy_labels`, `coarsen_composition`, CV plot helper, alignment assessment plot
 - `functions/consentrait_signed.R` -- consenTRAIT implementation used by step 6
 
 ---
@@ -131,14 +135,15 @@ Shared helpers:
 Run from the repo root:
 
 ```bash
-Rscript code/CCA/scripts/00_read_data.R             --config code/CCA/config/soil.R --tax_level OTU --perc_identity 0.90 --verbose
+Rscript code/CCA/scripts/00_read_data.R              --config code/CCA/config/soil.R --tax_level OTU --perc_identity 0.90 --verbose
 Rscript code/CCA/scripts/01_hyperparam_search.R      --config code/CCA/config/soil.R --tax_level OTU --perc_identity 0.90 --verbose
 Rscript code/CCA/scripts/02_loadings.R               --config code/CCA/config/soil.R --tax_level OTU --perc_identity 0.90 --verbose
-Rscript code/CCA/scripts/03_null_distribution.R      --config code/CCA/config/soil.R --tax_level OTU --perc_identity 0.90 --verbose
+Rscript code/CCA/scripts/03a_null_sample_shuffle.R   --config code/CCA/config/soil.R --tax_level OTU --perc_identity 0.90 --verbose
+Rscript code/CCA/scripts/03b_null_tax_shuffle.R      --config code/CCA/config/soil.R --tax_level Genus --perc_identity 0.90 --verbose
 Rscript code/CCA/scripts/04_model_performance_plots.R --config code/CCA/config/soil.R --tax_level OTU --perc_identity 0.90 --verbose --loadings_style continuous
 ```
 
-Step 3 can be slow (many shuffles x CV). Steps 1 and 3 accept `--n_cores` to parallelize across available cores.
+Steps 3a and 3b can be slow (many shuffles x CV). Steps 1, 3a, and 3b accept `--n_cores` to parallelize across available cores. Step 3b is not defined for `--tax_level OTU` (every OTU is already its own group, so shuffling assignment is a no-op) -- run it only for non-OTU levels.
 
 ### Cross-taxonomic compare (step 5)
 
@@ -173,11 +178,12 @@ Processes all available tax levels in one run. `--n_cds` should match the number
 
 ### SLURM batch jobs
 
-`sbatch/run_cca.sbatch` runs steps 0-4 for a single tax level:
+`sbatch/run_cca.sbatch` runs steps 0-4 for a single tax level, including both nulls (3a, 3b); 3b is skipped automatically for `--tax-level OTU`:
 
 ```bash
 cd code/CCA/sbatch
 sbatch run_cca.sbatch --config code/CCA/config/soil.R --tax-level OTU --perc-identity 0.90
+sbatch run_cca.sbatch --config code/CCA/config/soil.R --tax-level Genus --perc-identity 0.90
 ```
 
 `sbatch/run_cca_tax_sweep.sh` submits one job per tax level:
@@ -226,12 +232,16 @@ Results live under `results_path/<perc_identity>/<tax_level>/`:
         abundance_loadings.csv           # microbial abundance loadings (long format)
         alignment_combined.jpg           # raw vs aligned loadings by fold
 
-      step3_null/
-        null_correlations_per_fold.csv   # null canonical correlations (with seed)
-        null_env_loadings.csv            # null env loadings (long format, with seed)
+      step3a_null_sample_shuffle/
+        null_correlations_per_fold.csv   # sample-shuffle null canonical correlations (with seed)
+        null_env_loadings.csv            # sample-shuffle null env loadings (long format, with seed)
+
+      step3b_null_tax_shuffle/           # (non-OTU tax levels only)
+        taxshuffle_correlations_per_fold.csv  # taxonomy-shuffle null canonical correlations (with seed)
+        taxshuffle_env_loadings.csv           # taxonomy-shuffle null env loadings (long format, with seed)
 
       step4_plots/
-        test_correlation_vs_null.jpg     # true test correlation vs null distribution
+        test_correlation_vs_null.jpg     # true test correlation vs sample-shuffle null distribution
         env_loadings.jpg                 # env variable loadings scatter
         abundance_loadings_tree_cd1.jpg  # microbial loadings on GG2 tree, CD1
         abundance_loadings_tree_cd2.jpg  # ... one file per canonical direction
@@ -286,7 +296,7 @@ Environmental variable loadings per canonical direction and fold. High-loading v
 GG2 phylogenetic tree with tips colored by abundance loading magnitude (continuous) or sign (binary). Clustering of high-loading tips within clades suggests phylogenetic signal. One file per canonical direction.
 
 **`correlation_comparative.jpg`** (step 5)
-True test correlations across taxonomic levels for each canonical direction. Coarser levels (Phylum) typically show higher correlations due to aggregation; check whether signal is preserved at finer resolutions.
+True test correlations across taxonomic levels for each canonical direction, overlaid with both null bands where available: the sample-shuffle null (grey40) and the taxonomy-shuffle null (slate grey), distinguished in a "Null model" legend. Coarser levels (Phylum) typically show higher correlations due to aggregation; check whether signal is preserved at finer resolutions.
 
 **`env_loadings_comparative.jpg`** (step 5)
 Environmental loadings side-by-side across taxonomic levels. Consistent sign and rank across levels supports robustness; reversals suggest the signal is level-dependent.

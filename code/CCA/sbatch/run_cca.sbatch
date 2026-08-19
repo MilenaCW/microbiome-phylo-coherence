@@ -23,7 +23,12 @@
 #   --perc-identity ID   Percent identity threshold (default: 0.90)
 #   --step STEP          Run specific step(s). May be repeated. (default: all)
 #                        Steps: 00_read_data, 01_hyperparam_search, 02_loadings,
-#                               03_null_distribution, 04_model_performance_plots, all
+#                               03a_null_sample_shuffle, 03b_null_tax_shuffle,
+#                               04_model_performance_plots, all
+#                        03b_null_tax_shuffle (taxonomy-shuffle null) is included in "all",
+#                        but only runs when --tax-level is a non-OTU level (it is undefined
+#                        for OTU, where every OTU is already its own group) -- for OTU runs
+#                        it is silently skipped even under "all".
 #   --help, -h           Show this help message
 #
 # Examples:
@@ -34,7 +39,7 @@
 set -euo pipefail
 
 usage() {
-  sed -n '13,36p' "$0" | sed 's/^#//'
+  sed -n '13,37p' "$0" | sed 's/^#//'
   exit 1
 }
 
@@ -85,13 +90,26 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+ALL_STEPS=("00_read_data" "01_hyperparam_search" "02_loadings" "03a_null_sample_shuffle" "03b_null_tax_shuffle" "04_model_performance_plots")
+
 if [[ ${#STEPS[@]} -eq 0 ]]; then
-  STEPS=("00_read_data" "01_hyperparam_search" "02_loadings" "03_null_distribution" "04_model_performance_plots")
+  STEPS=("${ALL_STEPS[@]}")
 else
   # Expand "all" to every step
   if printf '%s\n' "${STEPS[@]}" | grep -qx "all"; then
-    STEPS=("00_read_data" "01_hyperparam_search" "02_loadings" "03_null_distribution" "04_model_performance_plots")
+    STEPS=("${ALL_STEPS[@]}")
   fi
+fi
+
+# 03b_null_tax_shuffle is undefined for OTU (every OTU is already its own group); drop it
+# silently rather than letting the R script's own error abort the whole job.
+if [[ "$TAX_LEVEL" == "OTU" ]]; then
+  filtered_steps=()
+  for step in "${STEPS[@]}"; do
+    [[ "$step" == "03b_null_tax_shuffle" ]] && continue
+    filtered_steps+=("$step")
+  done
+  STEPS=("${filtered_steps[@]}")
 fi
 
 if [[ ! -f "${CONFIG}" ]]; then
@@ -121,7 +139,7 @@ run_step() {
   echo "=== Step $step ==="
   echo
 
-  if [[ "$step" == "01_hyperparam_search" || "$step" == "03_null_distribution" ]]; then
+  if [[ "$step" == "01_hyperparam_search" || "$step" == "03a_null_sample_shuffle" || "$step" == "03b_null_tax_shuffle" ]]; then
     export OMP_NUM_THREADS="${parallel_BLAS_T}"
     export MKL_NUM_THREADS="${parallel_BLAS_T}"
     export OPENBLAS_NUM_THREADS="${parallel_BLAS_T}"
@@ -145,7 +163,7 @@ run_step() {
   local rscript_args=(--config "$CONFIG" --tax_level "$TAX_LEVEL" --perc_identity "$PERC_IDENTITY" --verbose)
 
   # number of cores for parallel processing * the number of BLAS threads for internal multithreading cannot be more than the SLURM_CPUS_PER_TASK
-  if [[ ("$step" == "01_hyperparam_search" || "$step" == "03_null_distribution") && -n "${SLURM_CPUS_PER_TASK:-}" ]]; then
+  if [[ ("$step" == "01_hyperparam_search" || "$step" == "03a_null_sample_shuffle" || "$step" == "03b_null_tax_shuffle") && -n "${SLURM_CPUS_PER_TASK:-}" ]]; then
     local n_cores=$(( SLURM_CPUS_PER_TASK / parallel_BLAS_T ))
     [[ $n_cores -lt 1 ]] && n_cores=1
     rscript_args+=(--n_cores "$n_cores")

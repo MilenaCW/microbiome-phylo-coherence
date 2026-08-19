@@ -14,6 +14,12 @@ TAX_ABBR         <- c(OTU = "OTU", Species = "Sp", Genus = "Ge",
 DATASET_COLORS   <- c(soil = "#8f723d", ocean = "#90afa7")
 DATASET_LABELS   <- c(soil = "soil", ocean = "ocean")
 
+# Taxonomy-shuffle null colour (kept in sync with SI_crosstax_corr.R). This section uses
+# only the taxonomy-shuffle null (the one relevant to phylogenetic-grouping stability),
+# not the sample-shuffle null shown in SI_crosstax_corr.R.
+NULL_FILL_COLOR  <- "#c7cdd1"
+NULL_LINE_COLOR  <- "#5b6b73"
+
 # ---------------------------------------------------------------------------
 get_repo_root <- function() {
   args     <- commandArgs(trailingOnly = FALSE)
@@ -121,8 +127,8 @@ legend_layer <- function() {
       size   = 3,
       stroke = 0.75,
       shape  = 21,
-      fill   = c("#8f723d", "#90afa7", "grey88"),
-      color  = c("#8f723d", "#90afa7", "grey50")
+      fill   = c("#8f723d", "#90afa7", NULL_FILL_COLOR),
+      color  = c("#8f723d", "#90afa7", NULL_LINE_COLOR)
     )
   )
 
@@ -135,13 +141,13 @@ legend_layer <- function() {
     ),
     scale_color_manual(
       name   = NULL,                          # <-- same name on both scales
-      values = c(soil = "#8f723d", ocean = "#90afa7", null = "grey50"),
+      values = c(soil = "#8f723d", ocean = "#90afa7", null = NULL_LINE_COLOR),
       drop   = FALSE,
       guide  = shared_guide
     ),
     scale_fill_manual(
       name   = NULL,                          # <-- same name → merged legend
-      values = c(soil = "#8f723d", ocean = "#90afa7", null = "grey88"),
+      values = c(soil = "#8f723d", ocean = "#90afa7", null = NULL_FILL_COLOR),
       drop   = FALSE,
       guide  = shared_guide
     )
@@ -164,10 +170,13 @@ load_dataset_inputs <- function(root, ds, perc) {
       mutate(tax_level = tax)
   }))
 
+  # Taxonomy-shuffle null (preserves group sizes when coarse-graining OTUs to tax_level);
+  # this is the null relevant to whether cross-level stability reflects phylogenetically
+  # coherent grouping, as opposed to any equal-sized grouping of OTUs.
   null_parts <- lapply(tax_dirs, function(tax) {
-    f <- file.path(base, tax, "step3_null", "null_env_loadings.csv")
+    f <- file.path(base, tax, "step3b_null_tax_shuffle", "taxshuffle_env_loadings.csv")
     if (!file.exists(f)) {
-      message("  No null file for ", ds, "/", tax, ", skipping")
+      message("  No taxshuffle null file for ", ds, "/", tax, ", skipping")
       return(NULL)
     }
     read_csv(f, show_col_types = FALSE) %>%
@@ -343,9 +352,9 @@ make_overall_panel <- function(res, ds) {
   ggplot(res$null_overall_seed, aes(x = factor(canonical_direction), y = M_js)) +
     geom_violin(
       draw_quantiles = c(0.5),  # add median line
-      fill = "grey88", 
-      color = "grey50", 
-      linewidth = 0.25, width = 0.9, 
+      fill = NULL_FILL_COLOR,
+      color = NULL_LINE_COLOR,
+      linewidth = 0.25, width = 0.9,
       scale = "width") +
     # geom_point(
     #   data = res$null_summary,
@@ -397,12 +406,12 @@ make_pair_panel <- function(res, ds, n_cd) {
     geom_linerange(
       data = plot_null,
       aes(x = pair_label, ymin = null_pair_q025, ymax = null_pair_q975),
-      color = "grey50", linewidth = 0.5
+      color = NULL_LINE_COLOR, linewidth = 0.5
     ) +
     geom_point(
       data = plot_null,
       aes(x = pair_label, y = null_pair_median),
-      shape = 21, fill = "grey88", color = "grey50", size = 1.6, stroke = 0.5
+      shape = 21, fill = NULL_FILL_COLOR, color = NULL_LINE_COLOR, size = 1.6, stroke = 0.5
     ) +
     geom_point(
       data = plot_true,

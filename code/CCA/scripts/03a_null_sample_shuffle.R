@@ -1,5 +1,8 @@
-# 03_null_distribution.R — Step 3: For each shuffle, run hyperparameter search, then calculate loadings at best params; save null correlations and loadings (long, with seed).
-# Usage: Rscript 03_null_distribution.R --config <path> --tax_level <level> --perc_identity <p> [--verbose]
+# 03a_null_sample_shuffle.R — Step 3a: Sample-shuffle null. For each shuffle, permute
+# sample rows of X (breaking the true composition-environment correspondence), run
+# hyperparameter search, then calculate loadings at best params; save null correlations
+# and loadings (long, with seed).
+# Usage: Rscript 03a_null_sample_shuffle.R --config <path> --tax_level <level> --perc_identity <p> [--verbose]
 
 args <- commandArgs(trailingOnly = FALSE)
 file_arg <- grep("^--file=", args, value = TRUE)
@@ -35,8 +38,8 @@ root <- if (exists("REPO_ROOT")) REPO_ROOT else getwd()
 results_path <- cfg$results_path
 if (!grepl("^/", results_path)) results_path <- file.path(root, results_path)
 step0_dir <- file.path(results_path, opt$perc_identity, opt$tax_level, "step0_data")
-step3_dir <- file.path(results_path, opt$perc_identity, opt$tax_level, "step3_null")
-dir.create(step3_dir, recursive = TRUE, showWarnings = FALSE)
+step3a_dir <- file.path(results_path, opt$perc_identity, opt$tax_level, "step3a_null_sample_shuffle")
+dir.create(step3a_dir, recursive = TRUE, showWarnings = FALSE)
 
 X <- as.matrix(read_csv(file.path(step0_dir, "X_matrix.csv"), show_col_types = FALSE))
 Y <- as.matrix(read_csv(file.path(step0_dir, "Y_matrix.csv"), show_col_types = FALSE))
@@ -73,6 +76,6 @@ for (seed in seeds) {
 }
 null_correlations_per_fold <- bind_rows(null_corr_list)
 null_env_loadings <- bind_rows(null_env_list)
-write.csv(null_correlations_per_fold, file.path(step3_dir, "null_correlations_per_fold.csv"), row.names = FALSE)
-write.csv(null_env_loadings, file.path(step3_dir, "null_env_loadings.csv"), row.names = FALSE)
-verbose_print(paste("Wrote", step3_dir), verbose = opt$verbose)
+write.csv(null_correlations_per_fold, file.path(step3a_dir, "null_correlations_per_fold.csv"), row.names = FALSE)
+write.csv(null_env_loadings, file.path(step3a_dir, "null_env_loadings.csv"), row.names = FALSE)
+verbose_print(paste("Wrote", step3a_dir), verbose = opt$verbose)

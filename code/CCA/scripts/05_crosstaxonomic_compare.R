@@ -82,11 +82,13 @@ plot_tax_levels <- plot_tax_levels[plot_tax_levels %in% tax_dirs]
 corr_list <- list()
 env_loadings_list <- list()
 null_expectations_list <- list()
+taxnull_expectations_list <- list()
 
 for (tax_level in tax_dirs) {
   verbose_print(paste("Processing", tax_level, "..."), verbose = opt$verbose)
   step2_dir <- file.path(compare_base, tax_level, "step2_loadings")
-  step3_dir <- file.path(compare_base, tax_level, "step3_null")
+  step3a_dir <- file.path(compare_base, tax_level, "step3a_null_sample_shuffle")
+  step3b_dir <- file.path(compare_base, tax_level, "step3b_null_tax_shuffle")
 
   # Correlations: from correlations_per_fold (canonical_direction, fold, train, test)
   corr_file <- file.path(step2_dir, "correlations_per_fold.csv")
@@ -113,8 +115,9 @@ for (tax_level in tax_dirs) {
     env_loadings_list[[tax_level]] <- env_summary
   }
 
-  # Null: from step3_null/null_correlations_per_fold.csv (canonical_direction, fold, train, test, seed)
-  null_file <- file.path(step3_dir, "null_correlations_per_fold.csv")
+  # Sample-shuffle null: from step3a_null_sample_shuffle/null_correlations_per_fold.csv
+  # (canonical_direction, fold, train, test, seed)
+  null_file <- file.path(step3a_dir, "null_correlations_per_fold.csv")
   if (file.exists(null_file)) {
     null_raw <- read_csv(null_file, show_col_types = FALSE)
     null_cd1 <- null_raw %>%
@@ -125,11 +128,26 @@ for (tax_level in tax_dirs) {
       mutate(tax_level = tax_level)
     null_expectations_list[[tax_level]] <- null_cd1
   }
+
+  # Taxonomy-shuffle null: from step3b_null_tax_shuffle/taxshuffle_correlations_per_fold.csv
+  # (canonical_direction, fold, train, test, seed); not defined for OTU.
+  taxnull_file <- file.path(step3b_dir, "taxshuffle_correlations_per_fold.csv")
+  if (file.exists(taxnull_file)) {
+    taxnull_raw <- read_csv(taxnull_file, show_col_types = FALSE)
+    taxnull_cd1 <- taxnull_raw %>%
+      filter(canonical_direction == 1) %>%
+      group_by(seed) %>%
+      summarise(mean_test = mean(test, na.rm = TRUE), .groups = "drop") %>%
+      summarise(mean = mean(mean_test), sd = sd(mean_test), n = n(), .groups = "drop") %>%
+      mutate(tax_level = tax_level)
+    taxnull_expectations_list[[tax_level]] <- taxnull_cd1
+  }
 }
 
 all_correlations <- bind_rows(corr_list)
 all_env_loadings <- bind_rows(env_loadings_list)
 all_null_expectations <- bind_rows(null_expectations_list)
+all_taxnull_expectations <- bind_rows(taxnull_expectations_list)
 
 if (nrow(all_env_loadings) == 0) {
   stop("No env loadings found in any tax-level directory.", call. = FALSE)
@@ -196,20 +214,38 @@ cor_plot <- ggplot(cor_plot_data, aes(x = factor(canonical_direction), y = mean,
   facet_wrap(vars(tax_level)) +
   theme_minimal(base_size = 8)
 
-if (nrow(all_null_expectations) > 0) {
-  null_plot_data <- all_null_expectations %>%
-    mutate(tax_level = factor(tax_level, levels = plot_tax_levels))
+null_type_colors <- c("sample-shuffle" = "grey40", "taxonomy-shuffle" = "#5b6b73")
+
+null_combined <- bind_rows(
+  if (nrow(all_null_expectations) > 0) all_null_expectations %>% mutate(null_type = "sample-shuffle") else NULL,
+  if (nrow(all_taxnull_expectations) > 0) all_taxnull_expectations %>% mutate(null_type = "taxonomy-shuffle") else NULL
+)
+if (nrow(null_combined) > 0) {
+  # `color` is already mapped to canonical direction on the main points/errorbars below,
+  # so the null bands are distinguished via `fill` only (a second `scale_color_manual`
+  # would silently replace that mapping); the dashed lines reuse the same literal colors.
+  null_plot_data <- null_combined %>%
+    mutate(
+      tax_level = factor(tax_level, levels = plot_tax_levels),
+      null_type = factor(null_type, levels = names(null_type_colors))
+    )
   cor_plot <- cor_plot +
     geom_rect(
       data = null_plot_data,
-      aes(xmin = 0.5, xmax = n_cd + 0.5, ymin = mean - sd / sqrt(n), ymax = mean + sd / sqrt(n)),
-      fill = "grey40", alpha = 0.15, inherit.aes = FALSE
+      aes(xmin = 0.5, xmax = n_cd + 0.5, ymin = mean - sd / sqrt(n), ymax = mean + sd / sqrt(n), fill = null_type),
+      alpha = 0.15, inherit.aes = FALSE
     ) +
     geom_hline(
-      data = null_plot_data,
+      data = null_plot_data %>% filter(null_type == "sample-shuffle"),
       aes(yintercept = mean),
-      linetype = "dashed", color = "grey40", linewidth = 0.7
-    )
+      linetype = "dashed", color = null_type_colors[["sample-shuffle"]], linewidth = 0.7
+    ) +
+    geom_hline(
+      data = null_plot_data %>% filter(null_type == "taxonomy-shuffle"),
+      aes(yintercept = mean),
+      linetype = "dashed", color = null_type_colors[["taxonomy-shuffle"]], linewidth = 0.7
+    ) +
+    scale_fill_manual(values = null_type_colors, name = "Null model", drop = FALSE)
 }
 cor_plot <- cor_plot +
   geom_point(size = 2) +

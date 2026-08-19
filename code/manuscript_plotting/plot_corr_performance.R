@@ -99,10 +99,10 @@ main <- function() {
   # CCA results path: <dataset>/results/CCA (same layout as CCA config results_path)
   results_path <- file.path(root, ds, "results", "CCA")
   step2_dir <- file.path(results_path, perc, tax, "step2_loadings")
-  step3_dir <- file.path(results_path, perc, tax, "step3_null")
+  step3a_dir <- file.path(results_path, perc, tax, "step3a_null_sample_shuffle")
 
   corr_file <- file.path(step2_dir, "correlations_per_fold.csv")
-  null_file <- file.path(step3_dir, "null_correlations_per_fold.csv")
+  null_file <- file.path(step3a_dir, "null_correlations_per_fold.csv")
   if (!file.exists(corr_file)) {
     stopf("Correlations file not found: %s\nRun CCA step 2 for this dataset/perc_identity/tax_level first.", corr_file)
   }

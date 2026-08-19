@@ -100,6 +100,10 @@ Rscript code/manuscript_plotting/SI_example_alignment.R \
 ```bash
 Rscript code/manuscript_plotting/SI_crosstax_corr.R
 ```
+Shows both the sample-shuffle null (`step3a_null_sample_shuffle/`, run via
+`code/CCA/scripts/03a_null_sample_shuffle.R`) and the taxonomy-shuffle null
+(`step3b_null_tax_shuffle/`, run via `code/CCA/scripts/03b_null_tax_shuffle.R`) if present;
+either null is silently skipped for a tax level if its file is missing.
 
 ### Fig. S9 — CCA vs. PCA comparison (soil)
 ```bash
@@ -117,7 +121,11 @@ Rscript code/manuscript_plotting/SI_PCA_comparison.R \
 ```bash
 Rscript code/manuscript_plotting/SI_crosstax_stability.R
 ```
-*(S11 and S12 are both produced in a single run.)*
+*(S11 and S12 are both produced in a single run.)* Uses the taxonomy-shuffle null
+(`step3b_null_tax_shuffle/taxshuffle_env_loadings.csv`, run via
+`code/CCA/scripts/03b_null_tax_shuffle.R`) rather than the sample-shuffle null, since
+this figure specifically tests whether cross-level stability reflects phylogenetically
+coherent grouping of OTUs.
 
 ### Fig. S13 — Cophenetic distance distributions across taxonomic levels
 

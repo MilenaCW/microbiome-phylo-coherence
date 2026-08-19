@@ -68,12 +68,7 @@ if (tax_level != "OTU") {
   otus <- setdiff(names(composition_df), "sample_id")
   missing <- setdiff(otus, taxonomy$Feature_ID)
   if (length(missing) > 0) stop(length(missing), " features in table not in taxonomy. Run GG2/clean first.", call. = FALSE)
-  composition_df <- composition_df %>%
-    pivot_longer(cols = -sample_id, names_to = "Feature_ID", values_to = "rel_abundance") %>%
-    left_join(taxonomy %>% select(Feature_ID, all_of(tax_level)), by = "Feature_ID") %>%
-    group_by(!!sym(tax_level), sample_id) %>%
-    summarise(rel_abundance = sum(rel_abundance), .groups = "drop") %>%
-    pivot_wider(names_from = !!sym(tax_level), values_from = rel_abundance, values_fill = 0)
+  composition_df <- coarsen_composition(composition_df, taxonomy, tax_level)
 }
 verbose_print(paste0("Compositional Data (",tax_level," level) - Samples: ", nrow(composition_df), " Features: ", ncol(composition_df) - 1), verbose = opt$verbose)
 

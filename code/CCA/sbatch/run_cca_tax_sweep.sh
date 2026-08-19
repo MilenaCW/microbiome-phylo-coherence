@@ -13,7 +13,9 @@
 #                       Family, Genus, Species, OTU
 #   --steps STEPS       Comma-separated list of specific steps to run (default: all)
 #                       Steps: 00_read_data, 01_hyperparam_search, 02_loadings,
-#                              03_null_distribution, 04_model_performance_plots, all
+#                              03a_null_sample_shuffle, 03b_null_tax_shuffle,
+#                              04_model_performance_plots, all
+#                       (03b_null_tax_shuffle is skipped automatically for --levels OTU)
 #   --output-dir DIR    Directory for output files (default: ./output_files)
 #   --dry-run           Show what would be submitted without actually submitting
 #   --help, -h          Show this help message

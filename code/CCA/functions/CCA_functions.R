@@ -411,12 +411,63 @@ rcca_loadings <- function(X, Y, k, lambda1, lambda2, seed = 1) {
 }
 
 # =============================================================================
-# NULL: shuffle_sample only
+# TAXONOMIC COARSE-GRAINING
+# =============================================================================
+
+#' Coarse-grain an OTU-level relative-abundance table to a higher taxonomic level.
+#'
+#' Sums relative abundance within each (tax_level, sample_id) group. Every
+#' feature (column) of composition_df must have a matching row in taxonomy.
+#'
+#' @param composition_df Samples x features relative-abundance table (first column sample_id).
+#' @param taxonomy Data frame with columns Feature_ID and tax_level (at least).
+#' @param tax_level Column name in taxonomy to coarse-grain to (e.g. "Genus").
+#' @return Samples x taxa relative-abundance table (first column sample_id).
+coarsen_composition <- function(composition_df, taxonomy, tax_level) {
+  needed <- c("Feature_ID", tax_level)
+  if (!all(needed %in% names(taxonomy))) {
+    stop("[coarsen_composition] taxonomy must contain Feature_ID and ", tax_level, call. = FALSE)
+  }
+  otus <- setdiff(names(composition_df), "sample_id")
+  missing <- setdiff(otus, taxonomy$Feature_ID)
+  if (length(missing) > 0) {
+    stop("[coarsen_composition] ", length(missing), " features in table not in taxonomy.", call. = FALSE)
+  }
+  composition_df %>%
+    pivot_longer(cols = -sample_id, names_to = "Feature_ID", values_to = "rel_abundance") %>%
+    left_join(taxonomy %>% select(Feature_ID, all_of(tax_level)), by = "Feature_ID") %>%
+    group_by(!!sym(tax_level), sample_id) %>%
+    summarise(rel_abundance = sum(rel_abundance), .groups = "drop") %>%
+    pivot_wider(names_from = !!sym(tax_level), values_from = rel_abundance, values_fill = 0)
+}
+
+# =============================================================================
+# NULL: shuffle_sample, shuffle_taxonomy_labels
 # =============================================================================
 
 shuffle_sample <- function(X, seed = 1) {
   if (!is.null(seed)) set.seed(seed)
   X[sample(nrow(X)), , drop = FALSE]
+}
+
+#' Randomize OTU -> taxonomic lineage assignment, preserving group sizes at every level.
+#'
+#' Permutes the Feature_ID column across rows of taxonomy, i.e. reassigns each OTU's
+#' abundance data to a randomly chosen taxonomic lineage (all ranks moving together as
+#' a unit). Because each row's full lineage is kept intact and only relabeled to a
+#' different Feature_ID, the size of every taxonomic group is preserved exactly at
+#' every rank simultaneously, from a single shuffle.
+#'
+#' @param taxonomy Data frame with a Feature_ID column (at least).
+#' @param seed RNG seed.
+#' @return taxonomy with Feature_ID column randomly permuted across rows.
+shuffle_taxonomy_labels <- function(taxonomy, seed = 1) {
+  if (!"Feature_ID" %in% names(taxonomy)) {
+    stop("[shuffle_taxonomy_labels] taxonomy must contain column Feature_ID", call. = FALSE)
+  }
+  if (!is.null(seed)) set.seed(seed)
+  taxonomy$Feature_ID <- sample(taxonomy$Feature_ID)
+  taxonomy
 }
 
 # =============================================================================
