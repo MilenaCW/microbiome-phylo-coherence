@@ -29,7 +29,7 @@ list(
       hco3 = "HCO3",
       co3 = "CO3"
     ),
-    tax_palette <- c(
+    tax_palette = c(
       Phylum  = "#decfb2",
       Class   = "#ddc68e",
       Order   = "#dcbd6c",

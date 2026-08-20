@@ -14,11 +14,10 @@ TAX_ABBR         <- c(OTU = "OTU", Species = "Sp", Genus = "Ge",
 DATASET_COLORS   <- c(soil = "#8f723d", ocean = "#90afa7")
 DATASET_LABELS   <- c(soil = "soil", ocean = "ocean")
 
-# Taxonomy-shuffle null colour (kept in sync with SI_crosstax_corr.R). This section uses
-# only the taxonomy-shuffle null (the one relevant to phylogenetic-grouping stability),
-# not the sample-shuffle null shown in SI_crosstax_corr.R.
-NULL_FILL_COLOR  <- "#c7cdd1"
-NULL_LINE_COLOR  <- "#5b6b73"
+# Null colour (unchanged from the original sample-shuffle-null styling; this section now
+# shows the taxonomy-shuffle null instead, not the sample-shuffle null shown in SI_crosstax_corr.R).
+NULL_FILL_COLOR  <- "grey88"
+NULL_LINE_COLOR  <- "grey50"
 
 # ---------------------------------------------------------------------------
 get_repo_root <- function() {

@@ -194,6 +194,18 @@ for (CD in directions) {
 
 verbose_print("Creating summary plots...", verbose = opt$verbose)
 
+# One color per tax level in plot order (recycle if config palette is shorter); matches the
+# manuscript SI figures (SI_crosstax_corr.R / plot_crosstax_env_loadings.R), which key color to
+# tax_level rather than canonical_direction.
+if (length(tax_palette) < length(plot_tax_levels)) {
+  warning(
+    "tax_palette has fewer colors (", length(tax_palette), ") than taxonomic levels (",
+    length(plot_tax_levels), "); colors will be recycled."
+  )
+}
+tax_palette_use <- rep(tax_palette, length.out = length(plot_tax_levels))
+tax_palette_named <- setNames(tax_palette_use, plot_tax_levels)
+
 # ---- Plot 1: Correlation comparative ----
 cor_plot_data <- all_correlations %>%
   filter(type == "test") %>%
@@ -202,50 +214,45 @@ cor_plot_data <- all_correlations %>%
 n_cd <- max(cor_plot_data$canonical_direction, 0)
 ymin_val <- min(cor_plot_data$mean - cor_plot_data$sd, na.rm = TRUE)
 ymin <- min(0, if (is.finite(ymin_val)) ymin_val else 0)
-cor_plot <- ggplot(cor_plot_data, aes(x = factor(canonical_direction), y = mean, color = factor(canonical_direction))) +
-  scale_color_manual(values = cov_palette, name = "Canonical direction") +
+cor_plot <- ggplot(cor_plot_data, aes(x = factor(canonical_direction), y = mean, color = tax_level)) +
+  scale_color_manual(values = tax_palette_named, guide = "none") +
   labs(
     x = "Canonical direction",
-    y = expression(rho[k] ~ "(mean ± sd)"),
+    y = expression(rho[OOS]^{(k)} ~ "(mean ± std)"),
     title = group_label
   ) +
   ylim(ymin, NA) +
-  guides(color = "none") +
   facet_wrap(vars(tax_level)) +
   theme_minimal(base_size = 8)
 
-null_type_colors <- c("sample-shuffle" = "grey40", "taxonomy-shuffle" = "#5b6b73")
+# Both nulls share one literal color; dashed vs. dotted linetype (mapped to null_type) is what
+# distinguishes them, so the legend only needs to show the line style, not a second color/fill key.
+null_line_color <- "grey40"
+null_linetypes <- c("sample-shuffle" = "dashed", "taxonomy-shuffle" = "dotted")
 
 null_combined <- bind_rows(
   if (nrow(all_null_expectations) > 0) all_null_expectations %>% mutate(null_type = "sample-shuffle") else NULL,
   if (nrow(all_taxnull_expectations) > 0) all_taxnull_expectations %>% mutate(null_type = "taxonomy-shuffle") else NULL
 )
 if (nrow(null_combined) > 0) {
-  # `color` is already mapped to canonical direction on the main points/errorbars below,
-  # so the null bands are distinguished via `fill` only (a second `scale_color_manual`
-  # would silently replace that mapping); the dashed lines reuse the same literal colors.
   null_plot_data <- null_combined %>%
     mutate(
       tax_level = factor(tax_level, levels = plot_tax_levels),
-      null_type = factor(null_type, levels = names(null_type_colors))
+      null_type = factor(null_type, levels = names(null_linetypes))
     )
   cor_plot <- cor_plot +
     geom_rect(
       data = null_plot_data,
-      aes(xmin = 0.5, xmax = n_cd + 0.5, ymin = mean - sd / sqrt(n), ymax = mean + sd / sqrt(n), fill = null_type),
-      alpha = 0.15, inherit.aes = FALSE
+      aes(xmin = 0.5, xmax = n_cd + 0.5, ymin = mean - sd / sqrt(n), ymax = mean + sd / sqrt(n)),
+      fill = null_line_color, alpha = 0.15, inherit.aes = FALSE
     ) +
     geom_hline(
-      data = null_plot_data %>% filter(null_type == "sample-shuffle"),
-      aes(yintercept = mean),
-      linetype = "dashed", color = null_type_colors[["sample-shuffle"]], linewidth = 0.7
+      data = null_plot_data,
+      aes(yintercept = mean, linetype = null_type),
+      color = null_line_color, linewidth = 0.7
     ) +
-    geom_hline(
-      data = null_plot_data %>% filter(null_type == "taxonomy-shuffle"),
-      aes(yintercept = mean),
-      linetype = "dashed", color = null_type_colors[["taxonomy-shuffle"]], linewidth = 0.7
-    ) +
-    scale_fill_manual(values = null_type_colors, name = "Null model", drop = FALSE)
+    scale_linetype_manual(values = null_linetypes, name = "Null model", drop = FALSE) +
+    guides(linetype = guide_legend(override.aes = list(color = null_line_color)))
 }
 cor_plot <- cor_plot +
   geom_point(size = 2) +
@@ -269,16 +276,6 @@ if (!is.null(env_var_labels) && length(env_var_labels) > 0 && !is.null(names(env
     mutate(var = factor(var, levels = sort(unique(var))))
 }
 
-# One color per tax level in plot order (recycle if config palette is shorter)
-if (length(tax_palette) < length(plot_tax_levels)) {
-  warning(
-    "tax_palette has fewer colors (", length(tax_palette), ") than taxonomic levels (",
-    length(plot_tax_levels), "); colors will be recycled."
-  )
-}
-tax_palette_use <- rep(tax_palette, length.out = length(plot_tax_levels))
-tax_palette_named <- setNames(tax_palette_use, plot_tax_levels)
-
 # Set facet layout explicitly so we can match figure dimensions (height/width per facet)
 n_facets <- dplyr::n_distinct(env_plot_data$canonical_direction)
 n_facet_cols <- min(3L, max(2L, ceiling(sqrt(n_facets))))
@@ -292,9 +289,9 @@ env_plot_width <- 2 + n_facet_cols * inch_per_facet_width
 env_plot <- env_plot_data %>%
   ggplot(aes(x = var, y = mean, color = tax_level)) +
   geom_hline(yintercept = 0, linetype = "dotted", color = "grey60") +
-  geom_point(size = 1.5) +
-  geom_line(aes(group = tax_level), linetype = "dotted", linewidth = 0.5) +
+  geom_line(aes(group = tax_level), linetype = "solid", linewidth = 0.5, alpha = 0.5) +
   geom_errorbar(aes(ymin = mean - se, ymax = mean + se), width = 0) +
+  geom_point(size = 1.5) +
   scale_color_manual(values = tax_palette_named, name = "taxonomic level") +
   facet_wrap(
     vars(canonical_direction),

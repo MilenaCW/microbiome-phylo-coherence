@@ -35,9 +35,9 @@ TAX_PALETTE <- c(
 # Label used for the empty icon-placeholder facet
 ICON_LABEL <- " "
 
-# Taxonomy-shuffle null colour (distinguishable from the sample-shuffle null's plain grey,
-# both in colour and in greyscale print). Kept in sync with SI_crosstax_stability.R.
-TAXSHUFFLE_NULL_COLOR <- "#5b6b73"
+# Both nulls share the sample-shuffle null's plain grey; sample-shuffle vs. taxonomy-shuffle
+# is distinguished by linetype only (dashed vs. dotted).
+NULL_COLOR <- "grey"
 
 # ---------------------------------------------------------------------------
 get_repo_root <- function() {
@@ -256,7 +256,7 @@ make_plot <- function(corr_data, null_data, taxnull_data, n_cd, plot_tax_levels,
         data        = null_plot,
         aes(xmin = 0.5, xmax = n_cd + 0.5,
             ymin = mean - sd / sqrt(n), ymax = mean + sd / sqrt(n)),
-        fill        = "grey",
+        fill        = NULL_COLOR,
         alpha       = 0.15,
         inherit.aes = FALSE
       ) +
@@ -264,7 +264,7 @@ make_plot <- function(corr_data, null_data, taxnull_data, n_cd, plot_tax_levels,
         data      = null_plot,
         aes(yintercept = mean),
         linetype  = "dashed",
-        color     = "grey",
+        color     = NULL_COLOR,
         linewidth = 0.7
       )
   }
@@ -278,15 +278,15 @@ make_plot <- function(corr_data, null_data, taxnull_data, n_cd, plot_tax_levels,
         data        = taxnull_plot,
         aes(xmin = 0.5, xmax = n_cd + 0.5,
             ymin = mean - sd / sqrt(n), ymax = mean + sd / sqrt(n)),
-        fill        = TAXSHUFFLE_NULL_COLOR,
+        fill        = NULL_COLOR,
         alpha       = 0.15,
         inherit.aes = FALSE
       ) +
       geom_hline(
         data      = taxnull_plot,
         aes(yintercept = mean),
-        linetype  = "dashed",
-        color     = TAXSHUFFLE_NULL_COLOR,
+        linetype  = "dotted",
+        color     = NULL_COLOR,
         linewidth = 0.7
       )
   }

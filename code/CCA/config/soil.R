@@ -31,7 +31,7 @@ list(
       soil_c_n_ratio = "C:N",
       clay_silt = "clay-silt"
     ),
-    tax_palette <- c(
+    tax_palette = c(
       Phylum  = "#decfb2",
       Class   = "#ddc68e",
       Order   = "#dcbd6c",
