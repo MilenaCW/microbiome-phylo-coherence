@@ -135,3 +135,38 @@ test_that("align_loading_vectors flips canonical directions independently", {
   expect_false(3L %in% result$flipped_folds[["1"]])
   expect_length(result$flipped_folds[["2"]], 0)
 })
+
+# ---- subset_hemisphere / scale_keep_constant ----
+
+test_that("subset_hemisphere splits by latitude and keeps all taxa", {
+  env_df  <- data.frame(sample_id = c("a", "b", "c", "d"), ph = 1:4)
+  comp_df <- data.frame(sample_id = c("a", "b", "c", "d"), t1 = c(1, 0, 1, 0), t2 = c(0, 0, 1, 1))
+  loc <- data.frame(sample_id = c("a", "b", "c", "d"), latitude = c(10, -5, 0, -20))
+  north <- subset_hemisphere(env_df, comp_df, loc, "north")
+  south <- subset_hemisphere(env_df, comp_df, loc, "south")
+  expect_equal(north$env_df$sample_id, c("a", "c"))
+  expect_equal(south$env_df$sample_id, c("b", "d"))
+  expect_equal(north$composition_df$sample_id, north$env_df$sample_id)
+  expect_equal(names(north$composition_df), names(comp_df))
+  expect_equal(names(south$composition_df), names(comp_df))
+})
+
+test_that("subset_hemisphere returns input for NULL or 'all' and errors on missing latitude", {
+  env_df  <- data.frame(sample_id = c("a", "b"), ph = 1:2)
+  comp_df <- data.frame(sample_id = c("a", "b"), t1 = c(1, 0))
+  loc <- data.frame(sample_id = "a", latitude = 1)
+  expect_identical(subset_hemisphere(env_df, comp_df, loc, NULL)$env_df, env_df)
+  expect_identical(subset_hemisphere(env_df, comp_df, loc, "all")$composition_df, comp_df)
+  expect_error(subset_hemisphere(env_df, comp_df, loc, "north"), "No latitude")
+})
+
+test_that("scale_keep_constant zeroes constant columns and matches scale() otherwise", {
+  M <- cbind(a = c(1, 2, 3, 4), b = c(0, 0, 0, 0))
+  S <- scale_keep_constant(M)
+  expect_false(anyNA(S))
+  expect_true(all(S[, "b"] == 0))
+  expect_equal(attr(S, "n_constant"), 1L)
+  expect_equal(as.numeric(S[, "a"]), as.numeric(scale(M)[, "a"]))
+  M2 <- cbind(a = c(1, 2, 3, 4), b = c(4, 1, 7, 2))
+  expect_equal(as.numeric(scale_keep_constant(M2)), as.numeric(scale(M2)))
+})

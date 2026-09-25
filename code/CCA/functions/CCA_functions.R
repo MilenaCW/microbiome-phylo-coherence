@@ -500,3 +500,39 @@ plot_alignment_assessment <- function(loadings_original,
   ggsave(file.path(dir_path, filename), plot = combined, width = 10, height = 12, dpi = 150)
   invisible(combined)
 }
+
+# =============================================================================
+# HEMISPHERE SPLIT
+# =============================================================================
+
+# Subset aligned env_df and composition_df to one hemisphere (north: latitude >= 0,
+# south: latitude < 0) using a site_locations table (sample_id, latitude). Runs after
+# load_datasets_cca, so the rare-taxa filter has already been applied on the full data;
+# no taxa or extra samples are dropped here. hemisphere = NULL or "all" returns the input.
+subset_hemisphere <- function(env_df, composition_df, site_locations, hemisphere = NULL) {
+  if (is.null(hemisphere) || hemisphere == "all") {
+    return(list(env_df = env_df, composition_df = composition_df))
+  }
+  if (!hemisphere %in% c("north", "south")) {
+    stop("[subset_hemisphere] hemisphere must be NULL, 'all', 'north' or 'south'.", call. = FALSE)
+  }
+  lat <- site_locations$latitude[match(env_df$sample_id, as.character(site_locations$sample_id))]
+  if (anyNA(lat)) {
+    stop("[subset_hemisphere] No latitude for ", sum(is.na(lat)), " sample(s) in site_locations.", call. = FALSE)
+  }
+  keep <- if (hemisphere == "north") lat >= 0 else lat < 0
+  if (!identical(env_df$sample_id, composition_df$sample_id)) {
+    stop("[subset_hemisphere] env_df and composition_df sample order mismatch.", call. = FALSE)
+  }
+  list(env_df = env_df[keep, , drop = FALSE], composition_df = composition_df[keep, , drop = FALSE])
+}
+
+# scale() that keeps constant (zero-variance) columns as all zeros instead of NaN.
+# Identical to scale() when no column is constant.
+scale_keep_constant <- function(M) {
+  M_scaled <- scale(M)
+  constant <- which(colSums(is.nan(M_scaled)) > 0)
+  if (length(constant) > 0) M_scaled[, constant] <- 0
+  attr(M_scaled, "n_constant") <- length(constant)
+  M_scaled
+}

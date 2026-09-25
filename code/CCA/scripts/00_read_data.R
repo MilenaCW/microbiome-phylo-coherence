@@ -59,6 +59,18 @@ data <- load_datasets_cca(env_file, seqtab_fn, read_threshold = 10, verbose = op
 env_df <- data$env_df
 composition_df <- data$composition_df
 
+# Optional hemisphere split (config field `hemisphere`: "north", "south"; default all samples).
+# Applied after the rare-taxa filter; no taxa or further samples are dropped.
+hemisphere <- cfg$hemisphere
+if (!is.null(hemisphere) && hemisphere != "all") {
+  locations_fn <- file.path(dirname(env_file), "site_locations.csv")
+  if (!file.exists(locations_fn)) stop("site_locations.csv not found; run read_data first.\n  Expected: ", locations_fn, call. = FALSE)
+  split <- subset_hemisphere(env_df, composition_df, read_csv(locations_fn, show_col_types = FALSE), hemisphere)
+  env_df <- split$env_df
+  composition_df <- split$composition_df
+  verbose_print(paste0("Hemisphere '", hemisphere, "': ", nrow(env_df), " samples retained."), verbose = opt$verbose)
+}
+
 if (tax_level != "OTU") {
   taxonomy_fn <- file.path(composition_final, "taxonomy.csv")
   if (!file.exists(taxonomy_fn)) stop("Taxonomy file not found for coarse-graining.", call. = FALSE)
@@ -97,8 +109,9 @@ if (tax_level == "OTU") {
 
 X <- as.matrix(composition_df %>% select(-sample_id))
 Y <- as.matrix(env_df %>% select(-sample_id))
-X_scaled <- scale(X)
-Y_scaled <- scale(Y)
+X_scaled <- scale_keep_constant(X)
+Y_scaled <- scale_keep_constant(Y)
+verbose_print(paste0("Constant (zero-variance) columns set to 0 after scaling: X ", attr(X_scaled, "n_constant"), ", Y ", attr(Y_scaled, "n_constant")), verbose = opt$verbose)
 
 out_dir <- file.path(results_path, perc_identity, tax_level, "step0_data")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
