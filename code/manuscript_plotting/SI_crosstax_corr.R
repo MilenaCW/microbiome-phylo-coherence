@@ -19,16 +19,15 @@ suppressPackageStartupMessages({
 stopf <- function(...) stop(sprintf(...), call. = FALSE)
 
 # Canonical order of taxonomic levels (coarsest last = lightest colour)
-TAX_LEVELS_ORDER <- c("OTU", "Species", "Genus", "Family", "Order", "Class", "Phylum")
+TAX_LEVELS_ORDER <- c("OTU", "Genus", "Family", "Order", "Class", "Phylum")
 
 # Manuscript colour palette (matches plot_crosstax_env_loadings.R)
 TAX_PALETTE <- c(
   OTU     = "#812727",
-  Species = "#a05532",
-  Genus   = "#bd863e",
-  Family  = "#dab449",
-  Order   = "#dcbd6c",
-  Class   = "#ddc68e",
+  Genus   = "#a55e34",
+  Family  = "#c89842",
+  Order   = "#dbb95e",
+  Class   = "#dcc487",
   Phylum  = "#decfb2"
 )
 

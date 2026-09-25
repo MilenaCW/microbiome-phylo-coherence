@@ -21,7 +21,7 @@ source(file.path(script_dir, "..", "..", "utility_functions.R"))
 
 option_list <- list(
   make_option(c("--config"), type = "character", default = NULL, help = "Path to CCA config R file (evaluates to a list).", metavar = "FILE"),
-  make_option(c("--tax_level"), type = "character", default = "OTU", help = "Taxonomic level: OTU, Domain, Phylum, Class, Order, Family, Genus, Species [default %default]"),
+  make_option(c("--tax_level"), type = "character", default = "OTU", help = "Taxonomic level: OTU, Domain, Phylum, Class, Order, Family, Genus [default %default]"),
   make_option(c("--perc_identity"), type = "character", default = "0.90", help = "Perc identity (e.g. 0.99) [default %default]"),
   make_option(c("--verbose", "-v"), action = "store_true", default = FALSE, help = "Verbose output.")
 )
@@ -34,7 +34,7 @@ if (!is.list(cfg)) stop("Config must evaluate to an R list.", call. = FALSE)
 
 tax_level <- opt$tax_level
 perc_identity <- opt$perc_identity
-allowed_tax <- c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "Species", "OTU")
+allowed_tax <- c("Domain", "Phylum", "Class", "Order", "Family", "Genus", "OTU")
 if (!tax_level %in% allowed_tax) stop("Invalid --tax_level. Allowed: ", paste(allowed_tax, collapse = ", "), call. = FALSE)
 
 root <- if (exists("REPO_ROOT")) REPO_ROOT else getwd()

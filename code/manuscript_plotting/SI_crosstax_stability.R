@@ -8,8 +8,8 @@ suppressPackageStartupMessages({
 
 stopf <- function(...) stop(sprintf(...), call. = FALSE)
 
-TAX_LEVELS_ORDER <- c("OTU", "Species", "Genus", "Family", "Order", "Class", "Phylum")
-TAX_ABBR         <- c(OTU = "OTU", Species = "Sp", Genus = "Ge",
+TAX_LEVELS_ORDER <- c("OTU", "Genus", "Family", "Order", "Class", "Phylum")
+TAX_ABBR         <- c(OTU = "OTU", Genus = "Ge",
                       Family = "Fa", Order = "Or", Class = "Cl", Phylum = "Ph")
 DATASET_COLORS   <- c(soil = "#8f723d", ocean = "#90afa7")
 DATASET_LABELS   <- c(soil = "soil", ocean = "ocean")
@@ -412,6 +412,7 @@ make_pair_panel <- function(res, ds, n_cd) {
     facet_wrap(~ canonical_direction, nrow = 2, scales = "fixed",
                labeller = labeller(canonical_direction = function(x) paste("CD", x))) +
     angle_scale() +
+    coord_cartesian(clip = "off") +
     legend_layer() +
     labs(
       x = "taxonomic-level pair",

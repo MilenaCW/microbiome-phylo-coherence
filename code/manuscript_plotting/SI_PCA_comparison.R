@@ -23,16 +23,15 @@ suppressPackageStartupMessages({
 
 stopf <- function(...) stop(sprintf(...), call. = FALSE)
 
-TAX_LEVELS  <- c("OTU", "Species", "Genus", "Family", "Order", "Class", "Phylum")
+TAX_LEVELS  <- c("OTU", "Genus", "Family", "Order", "Class", "Phylum")
 ICON_LABEL  <- " "   # placeholder facet label — renders as blank strip
 
 TAX_PALETTE <- c(
   OTU     = "#812727",
-  Species = "#a05532",
-  Genus   = "#bd863e",
-  Family  = "#dab449",
-  Order   = "#dcbd6c",
-  Class   = "#ddc68e",
+  Genus   = "#a55e34",
+  Family  = "#c89842",
+  Order   = "#dbb95e",
+  Class   = "#dcc487",
   Phylum  = "#decfb2"
 )
 

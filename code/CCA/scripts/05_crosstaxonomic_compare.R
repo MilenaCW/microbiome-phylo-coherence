@@ -20,7 +20,7 @@ source(file.path(script_dir, "..", "functions", "CCA_functions.R"))
 source(file.path(script_dir, "..", "..", "utility_functions.R"))
 
 # Hard-coded order of taxonomic levels (not dataset-specific)
-tax_levels_order <- c("OTU", "Species", "Genus", "Family", "Order", "Class", "Phylum")
+tax_levels_order <- c("OTU", "Genus", "Family", "Order", "Class", "Phylum")
 
 # Default tax palette if not in config
 default_tax_palette <- c(
