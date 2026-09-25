@@ -20,6 +20,7 @@ Rscript code/manuscript_plotting/plot_corr_performance.R \
 Rscript code/manuscript_plotting/plot_corr_performance.R \
   --dataset ocean --perc_identity 0.90 --tax_level OTU
 ```
+Also writes `manuscript/<dataset>/<dataset>_corr_pvalues_<perc>_<tax>.csv`: per CD, the fraction of folds whose test correlation is <= the CD1 null mean. An asterisk marks CDs where no fold falls at or below the null (p < 1/n_folds).
 
 ### Figure 3b — Cross-taxonomic environmental loadings (soil)
 ```bash
