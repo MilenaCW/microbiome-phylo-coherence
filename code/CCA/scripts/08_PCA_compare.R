@@ -28,7 +28,7 @@ suppressPackageStartupMessages({
   library(dplyr)
 })
 
-TAX_LEVELS <- c("OTU", "Species", "Genus", "Family", "Order", "Class", "Phylum")
+TAX_LEVELS <- c("OTU", "Genus", "Family", "Order", "Class", "Phylum")
 
 # ---------------------------------------------------------------------------
 parse_cli_args <- function(argv = commandArgs(trailingOnly = TRUE)) {

@@ -16,16 +16,15 @@ suppressPackageStartupMessages({
 stopf <- function(...) stop(sprintf(...), call. = FALSE)
 
 # Taxonomic level order (match CCA pipeline)
-tax_levels_order <- c("OTU", "Species", "Genus", "Family", "Order", "Class", "Phylum")
+tax_levels_order <- c("OTU", "Genus", "Family", "Order", "Class", "Phylum")
 
 # Manuscript color palette for taxonomic groups
 tax_palette <- c(
   Phylum  = "#decfb2",
-  Class   = "#ddc68e",
-  Order   = "#dcbd6c",
-  Family  = "#dab449",
-  Genus   = "#bd863e",
-  Species = "#a05532",
+  Class   = "#dcc487",
+  Order   = "#dbb95e",
+  Family  = "#c89842",
+  Genus   = "#a55e34",
   OTU     = "#812727"
 )
 

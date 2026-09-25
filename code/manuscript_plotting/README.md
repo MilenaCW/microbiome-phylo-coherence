@@ -84,42 +84,47 @@ Rscript code/manuscript_plotting/SI_GG2_performance.R --dataset soil
 Rscript code/manuscript_plotting/SI_GG2_performance.R --dataset ocean
 ```
 
-### Fig. S5 — Cross-validation and hyperparameter selection (example)
+### Fig. S5 — Percent OTUs assigned per taxonomic level
+```bash
+Rscript code/manuscript_plotting/SI_taxonomic_assignment.R
+```
+
+### Fig. S6 — Cross-validation and hyperparameter selection (example)
 ```bash
 Rscript code/manuscript_plotting/SI_example_hyperparameter_search.R \
   --dataset soil --tax_level OTU
 ```
 
-### Fig. S6 — Sign-flip alignment of loading vectors across folds (example)
+### Fig. S7 — Sign-flip alignment of loading vectors across folds (example)
 ```bash
 Rscript code/manuscript_plotting/SI_example_alignment.R \
   --dataset soil --tax_level OTU
 ```
 
-### Fig. S8 — Out-of-sample CCA correlation across taxonomic levels
+### Fig. S9 — Out-of-sample CCA correlation across taxonomic levels
 ```bash
 Rscript code/manuscript_plotting/SI_crosstax_corr.R
 ```
 
-### Fig. S9 — CCA vs. PCA comparison (soil)
+### Fig. S10 — CCA vs. PCA comparison (soil)
 ```bash
 Rscript code/manuscript_plotting/SI_PCA_comparison.R \
   --dataset soil --n_cds 4
 ```
 
-### Fig. S10 — CCA vs. PCA comparison (ocean)
+### Fig. S11 — CCA vs. PCA comparison (ocean)
 ```bash
 Rscript code/manuscript_plotting/SI_PCA_comparison.R \
   --dataset ocean --n_cds 3
 ```
 
-### Fig. S11 and S12 — Cross-taxonomic stability of canonical directions
+### Fig. S12 and S13 — Cross-taxonomic stability of canonical directions
 ```bash
 Rscript code/manuscript_plotting/SI_crosstax_stability.R
 ```
-*(S11 and S12 are both produced in a single run.)*
+*(S12 and S13 are both produced in a single run.)*
 
-### Fig. S13 — Cophenetic distance distributions across taxonomic levels
+### Fig. S14 — Cophenetic distance distributions across taxonomic levels
 
 > **Prerequisite:** requires Step 5 outputs (`{dataset}/results/reference_distances/`). Run Step 5 if not present.
 
@@ -127,7 +132,7 @@ Rscript code/manuscript_plotting/SI_crosstax_stability.R
 Rscript code/manuscript_plotting/SI_interintra_dist.R
 ```
 
-### Fig. S14 — Pagel's λ across canonical directions
+### Fig. S15 — Pagel's λ across canonical directions
 ```bash
 Rscript code/manuscript_plotting/plot_coherence.R \
   --dataset soil  --method pagel

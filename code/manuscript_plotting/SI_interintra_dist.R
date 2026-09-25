@@ -23,11 +23,10 @@ TAX_LEVELS_ORDER <- c("Genus", "Family", "Order", "Class", "Phylum")
 
 # Strip background colours per level (matches other SI figures)
 TAX_PALETTE <- c(
-  Species = "#a05532",
-  Genus   = "#bd863e",
-  Family  = "#dab449",
-  Order   = "#dcbd6c",
-  Class   = "#ddc68e",
+  Genus   = "#a55e34",
+  Family  = "#c89842",
+  Order   = "#dbb95e",
+  Class   = "#dcc487",
   Phylum  = "#decfb2"
 )
 

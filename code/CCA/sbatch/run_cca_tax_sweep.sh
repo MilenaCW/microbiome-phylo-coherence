@@ -10,7 +10,7 @@
 #   --perc-identity ID  Percent identity threshold (default: 0.90)
 #   --levels LEVELS     Comma-separated tax levels to run (default: all)
 #                       Use "all" for all levels: Phylum, Class, Order,
-#                       Family, Genus, Species, OTU
+#                       Family, Genus, OTU
 #   --steps STEPS       Comma-separated list of specific steps to run (default: all)
 #                       Steps: 00_read_data, 01_hyperparam_search, 02_loadings,
 #                              03_null_distribution, 04_model_performance_plots, all
@@ -26,7 +26,7 @@ usage() {
 }
 
 # All allowed tax levels (must match CCA scripts).
-ALL_LEVELS="Phylum,Class,Order,Family,Genus,Species,OTU"
+ALL_LEVELS="Phylum,Class,Order,Family,Genus,OTU"
 
 CONFIG_PATH=""
 PERC_IDENTITY="0.90"
