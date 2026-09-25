@@ -5,6 +5,7 @@
 #   Rscript code/manuscript_plotting/plot_corr_performance.R --dataset ocean --perc_identity 0.90 --tax_level Genus --root /path/to/repo
 #
 # Output: manuscript/<dataset_short>_corr_performance_<perc_short>_<tax_level>.pdf
+#         manuscript/<dataset_short>_corr_pvalues_<perc_short>_<tax_level>.csv
 
 suppressPackageStartupMessages({
   library(ggplot2)
@@ -121,6 +122,32 @@ main <- function() {
   null_mean <- mean(null_per_seed$mean_test)
   null_se <- sd(null_per_seed$mean_test) / sqrt(nrow(null_per_seed))
 
+  # p-value per CD: fraction of folds whose test correlation is <= the CD1 null mean.
+  # Significant only when no fold falls at or below the null (report as p < 1/n_folds).
+  pval_df <- corr_per_fold %>%
+    group_by(.data$canonical_direction) %>%
+    summarise(
+      n_folds = sum(!is.na(.data$test)),
+      n_folds_below_null = sum(.data$test <= null_mean, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    mutate(
+      p_value = .data$n_folds_below_null / .data$n_folds,
+      null_mean = null_mean,
+      significant = .data$n_folds_below_null == 0
+    )
+  true_stats <- true_stats %>%
+    left_join(pval_df %>% select("canonical_direction", "significant"), by = "canonical_direction")
+
+  out_dir <- file.path(root, "manuscript", ds)
+  if (!dir.exists(out_dir)) {
+    dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  perc_short <- paste0("p", sub("^[^.]*\\.?", "", perc))
+  pval_path <- file.path(out_dir, sprintf("%s_corr_pvalues_%s_%s.csv", ds, perc_short, tax))
+  write.csv(pval_df, pval_path, row.names = FALSE)
+  message("Saved: ", pval_path)
+
   point_color <- dataset_colors[ds]
   if (is.na(point_color)) stopf("Could not find color for dataset: %s", ds)
 
@@ -137,6 +164,8 @@ main <- function() {
              fill = "grey", alpha = 0.15) +
     geom_point(color = point_color) +
     geom_errorbar(aes(ymin = .data$mean - .data$sd, ymax = .data$mean + .data$sd), width = 0, linewidth = 0.8, color = point_color) +
+    geom_text(data = filter(true_stats, .data$significant), aes(y = .data$mean + .data$sd + 0.05),
+              label = "*", color = point_color, size = 5) +
     labs(
       x = "",
       y = ""
@@ -144,16 +173,11 @@ main <- function() {
       # subtitle = sprintf("perc_identity = %s, tax_level = %s", perc, tax)
     ) +
     scale_y_continuous(
-      limits = c(min(0,y_raw_min), max(1.0,y_raw_max)),
+      limits = c(min(0,y_raw_min), max(1.0,y_raw_max + 0.12)),
       breaks = seq(y_min, y_max, by = 0.25)
     ) +
     theme_minimal(base_size = 10)
 
-  out_dir <- file.path(root, "manuscript", ds)
-  if (!dir.exists(out_dir)) {
-    dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-  }
-  perc_short <- paste0("p", sub("^[^.]*\\.?", "", perc))
   out_path <- file.path(out_dir, sprintf("%s_corr_performance_%s_%s.pdf", ds, perc_short, tax))
   ggsave(out_path, plot = p, width = 2.75, height = 1.75)
   message("Saved: ", out_path)
