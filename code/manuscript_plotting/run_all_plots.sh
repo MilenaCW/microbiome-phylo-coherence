@@ -32,6 +32,7 @@ run "$SCRIPT_DIR/SI_env_diagnostics.R" --figure S2
 run "$SCRIPT_DIR/SI_env_diagnostics.R" --figure S3
 run "$SCRIPT_DIR/SI_GG2_performance.R"
 run "$SCRIPT_DIR/SI_taxonomic_assignment.R"         --perc_identity "$PERC"
+run "$SCRIPT_DIR/SI_tree_characterization.R"        --perc_identity "$PERC"
 run "$SCRIPT_DIR/SI_coherence.R"                    --method pagel --perc_identity "$PERC"
 run "$SCRIPT_DIR/SI_crosstax_corr.R"                --perc_identity "$PERC"
 run "$SCRIPT_DIR/SI_crosstax_stability.R"           --perc_identity "$PERC"
