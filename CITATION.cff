@@ -13,6 +13,8 @@ authors:
     orcid: "https://orcid.org/0000-0002-4130-6845"
 repository-code: "https://github.com/MilenaCW/microbiome-phylo-coherence"
 license: MIT
+version: "2.0.0"
+date-released: "2026-10-26"
 preferred-citation:
   type: article
   title: "Phylogenetic coherence in microbiome composition across environmental gradients"
